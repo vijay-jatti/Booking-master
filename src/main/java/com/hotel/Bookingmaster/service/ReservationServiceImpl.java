@@ -16,7 +16,9 @@ public class ReservationServiceImpl implements ReservationService {
 	// service pattern to manage transactionals  
 	//	and handle services for reservation between server and client
 
-
+	public ReservationServiceImpl(ReservationRep reservationRepository) {
+		this.reservationRepository = reservationRepository;
+	}
 	
 	@Autowired
 	ReservationRep reservationRepository;

@@ -2,19 +2,25 @@ package com.hotel.Bookingmaster.repository;
 
 import com.hotel.Bookingmaster.entity.Reservation;
 import com.hotel.Bookingmaster.entity.Room;
-import com.hotel.Bookingmaster.exception.RoomsNotAvailableException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Repository
 public class ReservationRepImpl implements ReservationRep{
 
-    private static List<Reservation> BookingRepo = new ArrayList<Reservation>();
-    private static HashMap<String,Integer> rooms = new HashMap<>();
+    /*
+    *  Made below two variables public to access in Unit tests as no DB is used
+     * Due to time constraint didn't create a clone of below ArrayList and use that clone using the setter in Unit testing.
+     *
+    */
+    public static List<Reservation> BookingRepo = new ArrayList<Reservation>();
+    public static HashMap<String,Integer> rooms = new HashMap<>();
 
     private static int roomsCount;
     @Value("${booking.rooms.limit}")
@@ -25,8 +31,8 @@ public class ReservationRepImpl implements ReservationRep{
         BookingRepo.add(new Reservation("vijay",1000.0,LocalDate.now(),1,1));
         BookingRepo.add(new Reservation("ajay",2000.0,LocalDate.now(),1,1));
         BookingRepo.add(new Reservation("jay",3000.0,LocalDate.now(),1,1));
-        System.out.println(LocalDate.now().toString());
         rooms.put(LocalDate.now().toString(),7);
+
     }
     @Override
     public ArrayList<Reservation> getReservationsForGuest(String guest) {
@@ -67,8 +73,6 @@ public class ReservationRepImpl implements ReservationRep{
             }
             i++;
         }
-        System.out.println("i="+i);
-        System.out.println("j="+j);
         if(i==j) {
             return true;
         }
@@ -84,10 +88,13 @@ public class ReservationRepImpl implements ReservationRep{
         int stayDays = reservation.getStayDays();
         int numberOfRooms = reservation.getNumberOfRooms();
         HashMap<String,Integer> tempRooms= new HashMap();
-        int roomsCntTemp=roomsCount;
         while(i<stayDays) {
-            startDate=startDate.plusDays(i);
+            if(i>0) {
+                startDate = startDate.plusDays(1);
+            }
             if (!rooms.containsKey(startDate.toString()) || rooms.get(startDate.toString())>0) {
+                int roomsCntTemp=!rooms.containsKey(startDate.toString())? roomsCount :
+                        rooms.get(startDate.toString())>0 ?  rooms.get(startDate.toString()):0;
                 if(roomsCntTemp-numberOfRooms>=0) {
                     roomsCntTemp = rooms.containsKey(startDate.toString()) ? rooms.get(startDate.toString()) - numberOfRooms
                             : roomsCntTemp - numberOfRooms;
@@ -98,7 +105,6 @@ public class ReservationRepImpl implements ReservationRep{
                 }
             }
             i++;
-            roomsCntTemp=roomsCount;
         }
         if(i==tempRooms.size()){
             rooms.putAll(tempRooms);
@@ -107,4 +113,6 @@ public class ReservationRepImpl implements ReservationRep{
         }
         return false;
     }
+
+    //Need to add a cleanup method to clean the rooms hashmap periodically by date.
 }
